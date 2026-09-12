@@ -156,7 +156,13 @@ struct pixel_s {
 };
 
 struct sprite_s {
-    uint8_t siz;
+    struct {
+        uint8_t xo : 3; //extremo superior izquierdo del sprite
+        uint8_t yo : 3;
+        uint8_t xf : 3; //extremo inferior derecho del sprite
+        uint8_t yf : 3;
+        uint8_t siz: 6; //numero de pixeles
+    };
     struct pixel_s* pix;
 };
 
@@ -167,7 +173,10 @@ sprite_t spr_new(uint8_t s) {
         if(spr->pix==NULL) {
             free(spr);
             spr=NULL;
-        } else spr->siz=0;
+        } else {
+            spr->siz=0;
+            spr->xo=spr->yo=spr->xf=spr->yf=0;
+        }
     }
     return spr;
 }
@@ -188,17 +197,14 @@ static int pix_cmp(struct pixel_s a,struct pixel_s b) {
 
 
 static int pix_ins(sprite_t s,struct pixel_s p) {
-    int pos=0;
-    for(;pos<s->siz;pos++) {
-        int cmp=pix_cmp(p,s->pix[pos]);
-        if(cmp==0) return 0;
-        else if(cmp==-1) break;
+    for(uint8_t pos=0;pos<s->siz;pos++) {
+        if(pix_cmp(s->pix[pos],p)==0) return 0;
     }
-    for(int k=s->siz;k>pos;k--) {
-        s->pix[k]=s->pix[k-1];
-    }
-    s->pix[pos]=p;
-    s->siz++;
+    if(p.x<s->xo) s->xo=p.x;
+    if(p.x>s->xf) s->xf=p.x;
+    if(p.y<s->yo) s->yo=p.y;
+    if(p.y>s->yf) s->yf=p.y;
+    s->pix[s->siz++]=p;
     return 1;
 }
 
@@ -321,7 +327,21 @@ int spr_bin(sprite_t s,uint8_t r,uint8_t* d,uint8_t c) {
         return 1;
     }
     return 0;
-}               
+}
+
+#define min(A,B) (((A)<(B))?(A):(B))
+#define max(A,B) (((A)>(B))?(A):(B))
+
+int spr_col(sprite_t sa,int xa,int ya,uint8_t pa,sprite_t sb,int xb,int yb,uint8_t pb) {
+    int xo=max(xa+pa*sa->xo,xb+pb*sb->xo);
+    int yo=max(ya+pa*sa->yo,yb+pb*sb->yo);
+    int xf=min(xa+pa*sa->xf,xb+pb*sb->xf);
+    int yf=min(ya+pa*sa->yf,yb+pb*sb->yf);
+    return (xo<=xf && yo<=yf);
+}
+
+#undef min
+#undef max
 
 // Texto
 
@@ -481,4 +501,4 @@ int rnd(int a,int b) {
 void pause(double t) {
     clock_t end=clock()+CLOCKS_PER_SEC*t;
     while(clock()<end);
-}   
+} 

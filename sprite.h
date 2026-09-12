@@ -93,6 +93,9 @@ sprite_t spr_mov(sprite_t spr,char* move);
 int spr_bin(sprite_t spr,uint8_t rows,uint8_t* data,uint8_t code_col);
 //añadimos una capa al sprite spr que se saca a partir de los datos en binario asignando un color de code_col
 
+int spr_col(sprite_t sa,int xa,int ya,uint8_t pa,sprite_t sb,int xb,int yb,uint8_t pb);
+//colision de dos sprites que ocupan una posicion y con una dimension de pixel dada
+
 // Texto
 
 void txt_ini();

@@ -19,7 +19,7 @@ static color_t background;
 static int min_key_code=0;
 static int max_key_code=0;
 
-int scr_new(uint16_t w,uint16_t h) {
+int scr_ini(uint16_t w,uint16_t h) {
 	int screenum=0;
 	display=XOpenDisplay(0);
 	if(display) {
@@ -55,7 +55,7 @@ int scr_new(uint16_t w,uint16_t h) {
 	return 0;
 }
 
-void scr_del() {
+void scr_end() {
 	XUnmapWindow(display,window);
 	XDestroyWindow(display,window);
 	XFreePixmap(display,virtual);
@@ -162,7 +162,7 @@ struct sprite_s {
 
 sprite_t spr_new(uint8_t s) {
     sprite_t spr=NULL;
-    if(s<SPRDIM && (spr=malloc(sizeof(struct sprite_s)))) {
+    if(s<=SPRDIM && (spr=malloc(sizeof(struct sprite_s)))) {
         spr->pix=malloc(sizeof(struct pixel_s)*s);
         if(spr->pix==NULL) {
             free(spr);
@@ -180,16 +180,39 @@ void spr_del(sprite_t* s) {
     }
 }
 
+static int pix_cmp(struct pixel_s a,struct pixel_s b) {
+    if(a.y>b.y || (a.y==b.y && a.x>b.x)) return 1;
+    else if (a.x==b.x && a.y==b.y) return 0;
+    else return -1;
+}
+
+
+static int pix_ins(sprite_t s,struct pixel_s p) {
+    int pos=0;
+    for(;pos<s->siz;pos++) {
+        int cmp=pix_cmp(p,s->pix[pos]);
+        if(cmp==0) return 0;
+        else if(cmp==-1) break;
+    }
+    for(int k=s->siz;k>pos;k--) {
+        s->pix[k]=s->pix[k-1];
+    }
+    s->pix[pos]=p;
+    s->siz++;
+    return 1;
+}
+
 int spr_ins(sprite_t s,uint8_t x,uint8_t y,uint8_t c) {
     if(s) {
-        s->pix[s->siz++]=(struct pixel_s){x,y,c};
-        return 1;
+        struct pixel_s n={x,y,c};
+        return pix_ins(s,n);
     }
     return 0;
 }
 
+
 int spr_drw(sprite_t s,palette_t p,int x,int y,uint8_t d) {
-    if(s) {
+    if(s && d) {
         struct pixel_s* pix=s->pix;
         while(pix!=s->pix+s->siz) {
             int dx=x+d*pix->x;
@@ -205,7 +228,7 @@ int spr_drw(sprite_t s,palette_t p,int x,int y,uint8_t d) {
 }
 
 int spr_era(sprite_t s,int x,int y,uint8_t d) {
-    if(s) {
+    if(s && d) {
         struct pixel_s* pix=s->pix;
         while(pix!=s->pix+s->siz) {
             int dx=x+d*pix->x;
@@ -219,32 +242,27 @@ int spr_era(sprite_t s,int x,int y,uint8_t d) {
     return 0;
 }
 
-
-sprite_t spr_grd(uint8_t r,char* data[]) {
-    struct pixel_s pix[SPRDIM];
-    struct pixel_s* ppix=pix;
-    for(uint8_t nr=0;nr<r;nr++) {
-        char* rdata=data[nr];
-        char* ptr=rdata;
-        while(*ptr!='\0') {
-            if(*ptr!=' ') {
-                *ppix++=(struct pixel_s){ptr-rdata,nr,*ptr-'0'};
+sprite_t spr_grd(uint8_t rows,char* data[]) {
+    sprite_t r=spr_new(SPRDIM);
+    if(r) {
+        for(uint8_t y=0;y<rows;y++) {
+            char* rdata=data[y];
+            char* ptr=rdata;
+            while(*ptr!='\0') {
+                if(*ptr!=' ') {
+                    uint8_t c=*ptr-'0';
+                    uint8_t x=ptr-rdata;
+                    struct pixel_s n={x,y,c};
+                    pix_ins(r,n);
+                }
+                ptr++;
             }
-            ptr++;
         }
+        void* ptr=NULL;
+        if(r->siz!=SPRDIM && (ptr=realloc(r->pix,sizeof(struct pixel_s)*r->siz))) r->pix=ptr;
     }
-    uint8_t siz=ppix-pix;
-    sprite_t s=spr_new(siz);
-    if(s) {
-        ppix=pix;
-        struct pixel_s* ps=s->pix;
-        while(ppix!=pix+siz) {
-            *ps++=*ppix++;
-        }
-        s->siz=siz;
-    }
-    return s;
-} 
+    return r;
+}           
 
 static struct pixel_s pix_six(struct pixel_s p) {
     return (struct pixel_s){p.x,CORMAX-p.y,p.c};
@@ -262,41 +280,56 @@ sprite_t spr_mov(sprite_t s,char* m) {
     sprite_t r=NULL;
     if(s && m) {
         r=spr_new(s->siz);
-        if(r) {
-            r->siz=s->siz;
-            struct pixel_s* psp=s->pix;
-            struct pixel_s* prp=r->pix;
-            while(prp!=r->pix+r->siz) {
-                struct pixel_s pa=*psp++;
-                char* pm=m;
-                while(*pm!='\0') {
-                    switch(*pm) {
-                        case 'x':
-                            pa=pix_six(pa);
-                            break;
-                        case 'y':
-                            pa=pix_siy(pa);
-                            break;
-                        case 'r':
-                            pa=pix_rot(pa);
-                            break;
-                    }
-                    pm++;
+        for(uint8_t pos=0;pos<s->siz;pos++) {
+            struct pixel_s pa=s->pix[pos];
+            char* pm=m;
+            while(*pm!='\0') {
+                switch(*pm) {
+                    case 'x':
+                        pa=pix_six(pa);
+                        break;
+                    case 'y':
+                        pa=pix_siy(pa);
+                        break;
+                    case 'r':
+                        pa=pix_rot(pa);
+                        break;
                 }
-                *prp++=pa;
+                pm++;
             }
+            pix_ins(r,pa);
         }
     }
     return r;
 }
 
+int spr_bin(sprite_t s,uint8_t r,uint8_t* d,uint8_t c) {
+    if(s && r && d) {
+        for(uint8_t y=0;y<r;y++) {
+            uint8_t val=d[y];
+            uint8_t msc=128;
+            uint8_t x=0;
+            while(msc) {
+                if(val & msc) {
+                    struct pixel_s p={x,y,c};
+                    if(!pix_ins(s,p)) return 0;
+                }
+                x++;
+                msc=msc>>1;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}               
+
 // Texto
 
 #define CHRINF 32 //caracter inferior
 #define CHRSUP 126 //caracter superior
-#define CHRDIM (ASUP-AINF+1) //numero de caracteres
+#define CHRDIM (CHRSUP-CHRINF+1) //numero de caracteres
 
-static struct sprite_s ascchr[CHRDIM];
+static sprite_t ascchr[CHRDIM];
 
 static uint8_t code_font[] = {
     0,0,0,0,0,0,0,0,                 // 32 ' '
@@ -396,40 +429,56 @@ static uint8_t code_font[] = {
     0,0,50,74,0,0,0,0               // 126 '~'
 };
 
-//TODO Definir los caracteres
 
-static void chr_new(uint pos) {
+static void chr_new(uint8_t pos) {
+    sprite_t nc=spr_new(SPRDIM);
+    uint8_t* data=code_font+(8*pos);
+    if(spr_bin(nc,8,data,0)) ascchr[pos]=nc;
 }
 
-
-
-static void txt_ini() {
-
-
-
-
-//prueba
-
-int main() {
-    scr_new(500,500);
-    char* data[]={  "00000000",
-                    "00111   ",
-                    "00111111",
-                    "   11   ",
-                    "11122111",
-                    "11122223",
-                    " 111111 ",
-                    "    111 "
-    };
-    sprite_t s=spr_grd(8,data);
-    palette_t pal={col_new(25,0,0),col_new(50,0,0),col_new(100,0,0),col_new(150,0,0)};
-    sprite_t r=spr_mov(s,"rrrr");
-    uint8_t pd=4;
-    spr_drw(s,pal,100,100,pd);
-    spr_drw(r,pal,200,100,pd);
-    scr_fls();
-    while(key_in('q')==0) key_lis();
-    spr_del(&s);
-    spr_del(&r);
-    scr_del();
+void txt_ini() {
+    for(uint8_t pos=0;pos<CHRDIM;pos++) chr_new(pos);
 }
+
+void txt_end() {
+    for(uint8_t pos=0;pos<CHRDIM;pos++) {
+        spr_del(ascchr+pos);
+    }
+}
+
+int txt_drw(char* str,color_t ink,int* x,int y,uint8_t pd) {
+    int ret=0;
+    if(str && x) {
+        ret=1;
+        int xx=*x;
+        palette_t pal={ink};
+        char* ptr=str;
+        while(*ptr!='\0') {
+            uint8_t c=(*ptr>=CHRINF && *ptr<=CHRSUP)?*ptr-CHRINF:32;
+            ret&=spr_drw(ascchr[c],pal,xx,y,pd);
+            ptr++;
+            xx+=(8*pd);
+        }
+        *x=xx;
+    }
+    return ret;
+}
+
+// Aleatorio
+
+int rnd(int a,int b) {
+    static int init=0;
+    if(!init) {
+        srand(time(NULL));
+        init=1;
+    }
+    int dif=((a>b)?a-b:b-a)+1;
+    return (rand()%dif)+(a>b)?b:a;
+}
+
+// Tiempo
+
+void pause(double t) {
+    clock_t end=clock()+CLOCKS_PER_SEC*t;
+    while(clock()<end);
+}   

@@ -493,7 +493,7 @@ int rnd(int a,int b) {
         init=1;
     }
     int dif=((a>b)?a-b:b-a)+1;
-    return (rand()%dif)+(a>b)?b:a;
+    return (rand()%dif)+((a>b)?b:a);
 }
 
 // Tiempo

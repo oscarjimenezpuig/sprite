@@ -41,10 +41,10 @@ void scr_fls();
 //se actualiza la pantalla
 
 void scr_clr();
-//limpia la pantalla
+//limpia la pantalla (necesita flush para actualizar)
 
 void scr_bkg(color_t color);
-//define el color del fondo
+//define el color del fondo (necesita flush para actualizar)
 
 // Color
 

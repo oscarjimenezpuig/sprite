@@ -77,7 +77,6 @@ void scr_fls() {
 void scr_clr() {
     XSetForeground(display,graphic,background);
     XFillRectangle(display,virtual,graphic,0,0,scr_w,scr_h);
-    scr_fls();
 }
 
 void scr_bkg(color_t c) {

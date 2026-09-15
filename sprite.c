@@ -216,7 +216,7 @@ int spr_ins(sprite_t s,uint8_t x,uint8_t y,uint8_t c) {
 }
 
 
-int spr_drw(sprite_t s,palette_t p,int x,int y,uint8_t d) {
+int spr_drw(sprite_t s,palette_t p,int x,int y,uint16_t d) {
     if(s && d) {
         struct pixel_s* pix=s->pix;
         while(pix!=s->pix+s->siz) {
@@ -232,7 +232,7 @@ int spr_drw(sprite_t s,palette_t p,int x,int y,uint8_t d) {
     return 0;
 }
 
-int spr_era(sprite_t s,int x,int y,uint8_t d) {
+int spr_era(sprite_t s,int x,int y,uint16_t d) {
     if(s && d) {
         struct pixel_s* pix=s->pix;
         while(pix!=s->pix+s->siz) {
@@ -331,7 +331,7 @@ int spr_bin(sprite_t s,uint8_t r,uint8_t* d,uint8_t c) {
 #define min(A,B) (((A)<(B))?(A):(B))
 #define max(A,B) (((A)>(B))?(A):(B))
 
-int spr_col(sprite_t sa,int xa,int ya,uint8_t pa,sprite_t sb,int xb,int yb,uint8_t pb) {
+int spr_col(sprite_t sa,int xa,int ya,uint16_t pa,sprite_t sb,int xb,int yb,uint16_t pb) {
     int xo=max(xa+pa*sa->xo,xb+pb*sb->xo);
     int yo=max(ya+pa*sa->yo,yb+pb*sb->yo);
     int xf=min(xa+pa*sa->xf,xb+pb*sb->xf);
@@ -465,7 +465,7 @@ void txt_end() {
     }
 }
 
-int txt_drw(char* str,color_t ink,int* x,int y,uint8_t pd) {
+int txt_drw(char* str,color_t ink,int* x,int y,uint16_t pd) {
     int ret=0;
     if(str && x) {
         ret=1;

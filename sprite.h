@@ -72,10 +72,10 @@ int spr_ins(sprite_t spr,uint8_t x,uint8_t y,uint8_t c);
 //introducimos un pixel en el sprite, los pixels se ordenan de extremo superior izquierdo a
 //extremo inferior derecho
 
-int spr_drw(sprite_t spr,palette_t pal,int x,int y,uint8_t pix_dim);
+int spr_drw(sprite_t spr,palette_t pal,int x,int y,uint16_t pix_dim);
 //se dibuja un sprite en la posicion x,y considerando la paleta pal y con un pixel de dimension pixdim
 
-int spr_era(sprite_t spr,int x,int y,uint8_t pix_dim);
+int spr_era(sprite_t spr,int x,int y,uint16_t pix_dim);
 //borra los pixels que conforman un sprite colocando el color del fondo
 
 sprite_t spr_grd(uint8_t rows,char* data[]);
@@ -93,7 +93,7 @@ sprite_t spr_mov(sprite_t spr,char* move);
 int spr_bin(sprite_t spr,uint8_t rows,uint8_t* data,uint8_t code_col);
 //añadimos una capa al sprite spr que se saca a partir de los datos en binario asignando un color de code_col
 
-int spr_col(sprite_t sa,int xa,int ya,uint8_t pa,sprite_t sb,int xb,int yb,uint8_t pb);
+int spr_col(sprite_t sa,int xa,int ya,uint16_t pa,sprite_t sb,int xb,int yb,uint16_t pb);
 //colision de dos sprites que ocupan una posicion y con una dimension de pixel dada
 
 // Texto
@@ -102,7 +102,7 @@ void txt_ini();
 
 void txt_end();
 
-int txt_drw(char* str,color_t ink,int* x,int y,uint8_t pix_dim);
+int txt_drw(char* str,color_t ink,int* x,int y,uint16_t pix_dim);
 //escribimos un texto con color ink  en la posicion x,y (la x final devuelve la posicion de la 
 //ultima letra, pixdim indica el tamaño del pixel
 

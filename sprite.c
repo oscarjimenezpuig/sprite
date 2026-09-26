@@ -160,7 +160,7 @@ struct sprite_s {
         uint8_t yo : 3;
         uint8_t xf : 3; //extremo inferior derecho del sprite
         uint8_t yf : 3;
-        uint8_t siz: 6; //numero de pixeles
+        uint8_t siz: 12; //numero de pixeles
     };
     struct pixel_s* pix;
 };
@@ -264,7 +264,10 @@ sprite_t spr_grd(uint8_t rows,char* data[]) {
             }
         }
         void* ptr=NULL;
-        if(r->siz!=SPRDIM && (ptr=realloc(r->pix,sizeof(struct pixel_s)*r->siz))) r->pix=ptr;
+		if(r->siz!=SPRDIM) {
+			if(ptr=realloc(r->pix,sizeof(struct pixel_s)*r->siz))) r->pix=ptr;
+			else r->pix=NULL;
+		}
     }
     return r;
 }           

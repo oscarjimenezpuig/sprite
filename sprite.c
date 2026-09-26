@@ -160,7 +160,7 @@ struct sprite_s {
         uint8_t yo : 3;
         uint8_t xf : 3; //extremo inferior derecho del sprite
         uint8_t yf : 3;
-        uint8_t siz: 12; //numero de pixeles
+        uint8_t siz: 8; //numero de pixeles
     };
     struct pixel_s* pix;
 };

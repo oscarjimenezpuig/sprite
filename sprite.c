@@ -265,7 +265,7 @@ sprite_t spr_grd(uint8_t rows,char* data[]) {
         }
         void* ptr=NULL;
 		if(r->siz!=SPRDIM) {
-			if(ptr=realloc(r->pix,sizeof(struct pixel_s)*r->siz))) r->pix=ptr;
+			if((ptr=realloc(r->pix,sizeof(struct pixel_s)*r->siz))) r->pix=ptr;
 			else r->pix=NULL;
 		}
     }
